@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Időpontfoglaló — beágyazható foglalási rendszer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .if-hero { max-width: 720px; margin: 0 auto; padding: 60px 20px 40px; }
+  .if-hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .if-hero p.lead { font-size: 16px; color: var(--if-text-muted); margin: 0 0 28px; max-width: 520px; }
+  .if-feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 32px; }
+  .if-feature { border: 1px solid var(--if-border); border-radius: var(--if-radius); padding: 16px; background: var(--if-surface); }
+  .if-feature h3 { font-size: 14px; margin: 0 0 6px; }
+  .if-feature p { font-size: 13px; color: var(--if-text-muted); margin: 0; }
+  .if-cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
+  .if-code-block { background: #1c1b18; color: #eae7de; padding: 16px; border-radius: var(--if-radius); font-family: var(--if-font-mono); font-size: 12.5px; overflow-x: auto; white-space: pre; }
+</style>
+</head>
+<body class="if-widget-body">
+  <div class="if-hero">
+    <h1>Időpontfoglaló</h1>
+    <p class="lead">Egyetlen, bármelyik weboldalba beágyazható foglalási widget — fodrászatnak, fogászatnak, személyi edzőnek vagy bármilyen szolgáltatónak. Az adatok Firebase-ben tárolódnak, backend fejlesztés nélkül.</p>
+
+    <div class="if-feature-grid">
+      <div class="if-feature">
+        <h3>Több vállalkozás, egy rendszer</h3>
+        <p>Minden ügyfeled saját azonosítót (business ID) kap, saját szolgáltatásokkal és nyitvatartással.</p>
+      </div>
+      <div class="if-feature">
+        <h3>Iframe beágyazás</h3>
+        <p>Egy sornyi HTML kóddal bármelyik landing oldalba illeszthető, saját színekre hangolható.</p>
+      </div>
+      <div class="if-feature">
+        <h3>Admin felület</h3>
+        <p>A vállalkozás tulajdonosa maga kezeli a foglalásokat, szolgáltatásokat és nyitvatartást.</p>
+      </div>
+      <div class="if-feature">
+        <h3>Ütközésmentes foglalás</h3>
+        <p>A rendszer automatikusan kiszűri a már lefoglalt időpontokat, dupla foglalás nélkül.</p>
+      </div>
+    </div>
+
+    <div class="if-cta-row">
+      <a href="admin.html" class="if-btn if-btn-primary">Admin felület megnyitása</a>
+      <a href="README.md" class="if-btn if-btn-ghost">Beüzemelési útmutató</a>
+    </div>
+
+    <p class="if-section-title">Beágyazó kód (példa)</p>
+    <div class="if-code-block">&lt;iframe
+  src="https://sajat-domained.hu/booking.html?business=anna-fodraszat"
+  width="100%"
+  height="720"
+  style="border:none; max-width:600px;"
+  title="Időpontfoglalás"&gt;&lt;/iframe&gt;</div>
+
+    <p class="if-footer-note" style="text-align:left; margin-top:32px;">Első lépésként hozz létre egy Firebase projektet, majd töltsd ki a js/firebase-config.js fájlt — részletek a README.md-ben.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /businesses/{businessId} {
+      // Bárki olvashatja az alapadatokat (szolgáltatások, nyitvatartás) —
+      // ez kell a nyilvános foglalási widgethez.
+      allow read: if true;
+
+      // Csak a tulajdonos hozhatja létre / módosíthatja a saját vállalkozását.
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if request.auth != null
+                    && resource.data.ownerUid == request.auth.uid;
+
+      match /appointments/{appointmentId} {
+        // Bárki hozhat létre foglalást (ez a nyilvános foglalási funkció),
+        // de csak "pending" státusszal, és nem írhat bele random mezőket.
+        allow create: if request.resource.data.status == 'pending'
+                      && request.resource.data.keys().hasAll(['serviceId','serviceName','date','time','customerName','customerPhone','status'])
+                      && request.resource.data.customerName is string
+                      && request.resource.data.customerPhone is string;
+
+        // Az időpontok elolvasása (ütközés-ellenőrzéshez) mindenkinek engedélyezett,
+        // de csak a tulajdonos admin felülete listázza ki az ügyfél-adatokkal együtt.
+        allow read: if true;
+
+        // Csak a vállalkozás tulajdonosa módosíthatja / törölheti (megerősítés, lemondás, törlés).
+        allow update, delete: if request.auth != null
+                      && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerUid == request.auth.uid;
+      }
+    }
+  }
+}

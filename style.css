@@ -1,0 +1,277 @@
+/* ============================================================
+   IDŐPONTFOGLALÓ WIDGET — ALAP STÍLUS
+   A színek és betűtípus CSS változókon keresztül testreszabhatók,
+   így minden beágyazó weboldal (fodrászat, fogászat, edző stb.)
+   a saját arculatára színezheti a widgetet — lásd README.md
+   ============================================================ */
+
+:root {
+  --if-primary: #1F6F5C;       /* fő szín (gomb, kiemelés) */
+  --if-primary-dark: #165545;
+  --if-accent: #E8A33D;        /* kiválasztott elem, figyelemfelhívás */
+  --if-bg: #FAFAF8;
+  --if-surface: #FFFFFF;
+  --if-border: #E4E1DA;
+  --if-text: #201F1C;
+  --if-text-muted: #6B675F;
+  --if-danger: #C4453B;
+  --if-success: #2E8B57;
+  --if-radius: 10px;
+  --if-radius-sm: 6px;
+  --if-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --if-font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --if-shadow: 0 1px 3px rgba(32,31,28,0.08), 0 8px 24px rgba(32,31,28,0.06);
+}
+
+* { box-sizing: border-box; }
+
+body.if-widget-body {
+  margin: 0;
+  font-family: var(--if-font);
+  background: var(--if-bg);
+  color: var(--if-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.if-container {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.if-header {
+  margin-bottom: 24px;
+}
+
+.if-business-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.if-business-sub {
+  font-size: 14px;
+  color: var(--if-text-muted);
+  margin: 0;
+}
+
+/* Step progress */
+.if-steps {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.if-step-dot {
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--if-border);
+  transition: background .25s ease;
+}
+.if-step-dot.if-active { background: var(--if-primary); }
+.if-step-dot.if-done { background: var(--if-primary); opacity: 0.5; }
+
+.if-card {
+  background: var(--if-surface);
+  border: 1px solid var(--if-border);
+  border-radius: var(--if-radius);
+  padding: 20px;
+  box-shadow: var(--if-shadow);
+}
+
+.if-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--if-text-muted);
+  margin: 0 0 12px;
+}
+
+/* Service list */
+.if-service-list { display: flex; flex-direction: column; gap: 10px; }
+.if-service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1.5px solid var(--if-border);
+  border-radius: var(--if-radius-sm);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+  background: var(--if-surface);
+}
+.if-service-item:hover { border-color: var(--if-primary); }
+.if-service-item.if-selected {
+  border-color: var(--if-primary);
+  background: color-mix(in srgb, var(--if-primary) 6%, white);
+}
+.if-service-name { font-weight: 600; font-size: 15px; }
+.if-service-meta { font-size: 13px; color: var(--if-text-muted); margin-top: 2px; }
+.if-service-price { font-family: var(--if-font-mono); font-size: 14px; font-weight: 600; color: var(--if-primary); white-space: nowrap; }
+
+/* Calendar */
+.if-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.if-cal-nav {
+  background: none;
+  border: 1px solid var(--if-border);
+  border-radius: var(--if-radius-sm);
+  width: 32px; height: 32px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--if-text);
+}
+.if-cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.if-cal-month { font-weight: 700; font-size: 15px; }
+.if-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+.if-cal-dow { font-size: 11px; color: var(--if-text-muted); padding-bottom: 6px; font-weight: 600; }
+.if-cal-day {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--if-radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+.if-cal-day.if-empty { cursor: default; }
+.if-cal-day.if-disabled { color: var(--if-border); cursor: not-allowed; }
+.if-cal-day.if-available:hover { border-color: var(--if-primary); }
+.if-cal-day.if-selected { background: var(--if-primary); color: #fff; font-weight: 700; }
+.if-cal-day.if-today:not(.if-selected) { border-color: var(--if-accent); }
+
+/* Time slots */
+.if-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.if-slot {
+  padding: 10px 6px;
+  text-align: center;
+  border: 1.5px solid var(--if-border);
+  border-radius: var(--if-radius-sm);
+  font-family: var(--if-font-mono);
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--if-surface);
+}
+.if-slot:hover { border-color: var(--if-primary); }
+.if-slot.if-selected { background: var(--if-primary); border-color: var(--if-primary); color: #fff; font-weight: 700; }
+.if-slot.if-taken { opacity: 0.35; text-decoration: line-through; cursor: not-allowed; }
+.if-no-slots { font-size: 14px; color: var(--if-text-muted); padding: 16px 0; text-align: center; }
+
+/* Form */
+.if-field { margin-bottom: 14px; }
+.if-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.if-input, .if-textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--if-border);
+  border-radius: var(--if-radius-sm);
+  font-family: var(--if-font);
+  font-size: 14px;
+  background: var(--if-surface);
+  color: var(--if-text);
+}
+.if-input:focus, .if-textarea:focus {
+  outline: none;
+  border-color: var(--if-primary);
+}
+.if-textarea { resize: vertical; min-height: 70px; }
+
+/* Buttons */
+.if-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: var(--if-radius-sm);
+  border: none;
+  font-family: var(--if-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s ease, transform .1s ease;
+}
+.if-btn:active { transform: scale(0.98); }
+.if-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.if-btn-primary { background: var(--if-primary); color: #fff; }
+.if-btn-primary:hover:not(:disabled) { background: var(--if-primary-dark); }
+.if-btn-ghost { background: transparent; color: var(--if-text-muted); border: 1.5px solid var(--if-border); }
+.if-btn-ghost:hover { border-color: var(--if-text-muted); }
+.if-btn-danger { background: var(--if-danger); color: #fff; }
+.if-btn-block { width: 100%; }
+
+.if-nav-row { display: flex; gap: 10px; margin-top: 20px; }
+.if-nav-row .if-btn { flex: 1; }
+
+/* Summary */
+.if-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--if-border);
+  font-size: 14px;
+}
+.if-summary-row:last-child { border-bottom: none; }
+.if-summary-label { color: var(--if-text-muted); }
+.if-summary-value { font-weight: 600; text-align: right; }
+
+/* Confirmation */
+.if-confirm-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--if-success);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+}
+.if-confirm-title { text-align: center; font-size: 19px; font-weight: 700; margin: 0 0 6px; }
+.if-confirm-sub { text-align: center; font-size: 14px; color: var(--if-text-muted); margin: 0 0 20px; }
+
+.if-error-box {
+  background: color-mix(in srgb, var(--if-danger) 10%, white);
+  color: var(--if-danger);
+  border: 1px solid color-mix(in srgb, var(--if-danger) 30%, white);
+  padding: 10px 14px;
+  border-radius: var(--if-radius-sm);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.if-loading { text-align: center; padding: 60px 20px; color: var(--if-text-muted); font-size: 14px; }
+.if-spinner {
+  width: 28px; height: 28px;
+  border: 3px solid var(--if-border);
+  border-top-color: var(--if-primary);
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  animation: if-spin 0.7s linear infinite;
+}
+@keyframes if-spin { to { transform: rotate(360deg); } }
+
+.if-footer-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--if-text-muted);
+  margin-top: 24px;
+  opacity: 0.6;
+}
+
+@media (max-width: 400px) {
+  .if-slot-grid { grid-template-columns: repeat(2, 1fr); }
+}
