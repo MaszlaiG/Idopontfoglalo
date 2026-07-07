@@ -17,8 +17,23 @@ const state = {
   calYear: new Date().getFullYear(),
   selectedDate: null, // "YYYY-MM-DD"
   selectedTime: null, // "HH:MM"
-  existingAppointments: [], // az adott napra
+  lockedTimes: new Set(), // az adott napra zárolt (slotInterval-granularitású) blokk-időpontok
 };
+
+// Az adott kezdő időponthoz és időtartamhoz tartozó "blokk-időpontok" listája,
+// a slotInterval rácshoz igazítva. Ezek alapján zárolunk/ellenőrzünk ütközést —
+// ez a rács minden szolgáltatásra ugyanaz, függetlenül azok időtartamától.
+function blockTimesFor(startTime, duration) {
+  const interval = state.business.slotInterval || 30;
+  const [h, m] = startTime.split(':').map(Number);
+  let t = h * 60 + m;
+  const end = t + duration;
+  const times = [];
+  for (; t < end; t += interval) {
+    times.push(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
+  }
+  return times;
+}
 
 const root = document.getElementById('if-root');
 
@@ -208,15 +223,7 @@ function generateDaySlots() {
 
 function isSlotTaken(slot) {
   const duration = state.selectedService.duration;
-  const [sh, sm] = slot.split(':').map(Number);
-  const start = sh * 60 + sm;
-  const end = start + duration;
-  return state.existingAppointments.some(a => {
-    const [ah, am] = a.time.split(':').map(Number);
-    const aStart = ah * 60 + am;
-    const aEnd = aStart + (a.duration || 30);
-    return start < aEnd && aStart < end;
-  });
+  return blockTimesFor(slot, duration).some(t => state.lockedTimes.has(t));
 }
 
 function renderSlots() {
@@ -305,7 +312,7 @@ function attachStepHandlers() {
         state.selectedDate = el.dataset.date;
         state.selectedTime = null;
         render();
-        await loadAppointmentsForDate(state.selectedDate);
+        await loadLockedSlotsForDate(state.selectedDate);
         renderSlotsInPlace();
       });
     });
@@ -350,19 +357,21 @@ function shiftMonth(delta) {
   render();
 }
 
-async function loadAppointmentsForDate(dateKeyStr) {
+async function loadLockedSlotsForDate(dateKeyStr) {
   const wrap = document.getElementById('if-slots-wrap');
   if (wrap) wrap.innerHTML = `<div class="if-loading" style="padding:20px;"><div class="if-spinner"></div>Betöltés…</div>`;
   try {
+    // A slotLocks gyűjtemény csak dátum/idő "zárakat" tartalmaz, semmilyen
+    // személyes ügyféladatot nem — ez teszi lehetővé, hogy az elérhetőség
+    // nyilvánosan, biztonságosan lekérdezhető legyen.
     const snap = await db.collection('businesses').doc(state.businessId)
-      .collection('appointments')
+      .collection('slotLocks')
       .where('date', '==', dateKeyStr)
-      .where('status', '!=', 'cancelled')
       .get();
-    state.existingAppointments = snap.docs.map(d => d.data());
+    state.lockedTimes = new Set(snap.docs.map(d => d.data().time));
   } catch (err) {
     console.error(err);
-    state.existingAppointments = [];
+    state.lockedTimes = new Set();
   }
 }
 
@@ -394,10 +403,49 @@ async function submitBooking() {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Küldés…';
 
+  const businessRef = db.collection('businesses').doc(state.businessId);
+  const blockTimes = blockTimesFor(state.selectedTime, state.selectedService.duration);
+  const apptRef = businessRef.collection('appointments').doc();
+  const lockRefs = blockTimes.map(t => businessRef.collection('slotLocks').doc(`${state.selectedDate}_${t}`));
+
   try {
-    // Ütközés-ellenőrzés még egyszer, közvetlenül a mentés előtt
-    await loadAppointmentsForDate(state.selectedDate);
-    if (isSlotTaken(state.selectedTime)) {
+    // Atomi tranzakció: egyetlen "mindent vagy semmit" műveletben ellenőrzi,
+    // hogy egyik szükséges időblokk sincs még lefoglalva, és ha nincs,
+    // egyszerre zárolja mindet + létrehozza a foglalást. Ez a Firestore
+    // szerveroldali garanciája miatt akkor is kizárja a dupla foglalást,
+    // ha két ember teljesen egyszerre küldi be ugyanazt az időpontot.
+    await db.runTransaction(async (tx) => {
+      for (const ref of lockRefs) {
+        const snap = await tx.get(ref);
+        if (snap.exists) {
+          throw new Error('SLOT_TAKEN');
+        }
+      }
+      lockRefs.forEach((ref, i) => {
+        tx.set(ref, { date: state.selectedDate, time: blockTimes[i], appointmentId: apptRef.id });
+      });
+      tx.set(apptRef, {
+        serviceId: state.selectedService.id,
+        serviceName: state.selectedService.name,
+        duration: state.selectedService.duration,
+        price: state.selectedService.price,
+        date: state.selectedDate,
+        time: state.selectedTime,
+        blockTimes: blockTimes,
+        customerName: name,
+        customerPhone: phone,
+        customerEmail: email || null,
+        note: note || null,
+        status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    state.step = 4;
+    render();
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'SLOT_TAKEN') {
       errBox.innerHTML = `<div class="if-error-box">Sajnos ezt az időpontot időközben lefoglalták. Válassz másikat.</div>`;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Foglalás véglegesítése';
@@ -406,26 +454,6 @@ async function submitBooking() {
       render();
       return;
     }
-
-    await db.collection('businesses').doc(state.businessId).collection('appointments').add({
-      serviceId: state.selectedService.id,
-      serviceName: state.selectedService.name,
-      duration: state.selectedService.duration,
-      price: state.selectedService.price,
-      date: state.selectedDate,
-      time: state.selectedTime,
-      customerName: name,
-      customerPhone: phone,
-      customerEmail: email || null,
-      note: note || null,
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    state.step = 4;
-    render();
-  } catch (err) {
-    console.error(err);
     errBox.innerHTML = `<div class="if-error-box">Hiba történt a foglalás mentésekor. Próbáld újra.</div>`;
     submitBtn.disabled = false;
     submitBtn.textContent = 'Foglalás véglegesítése';

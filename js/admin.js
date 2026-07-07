@@ -376,7 +376,22 @@ function attachTabHandlers() {
   }
 }
 
+// A foglaláshoz tartozó slotLocks blokkokat szabadítja fel, hogy az adott
+// időpont újra foglalhatóvá váljon (lemondáskor vagy törléskor).
+async function releaseLocksForAppointment(appt) {
+  if (!appt || !appt.blockTimes || !appt.blockTimes.length) return;
+  const batch = db.batch();
+  appt.blockTimes.forEach(t => {
+    batch.delete(db.collection('businesses').doc(adminState.businessId).collection('slotLocks').doc(`${appt.date}_${t}`));
+  });
+  await batch.commit();
+}
+
 async function updateAppointmentStatus(id, status) {
+  if (status === 'cancelled') {
+    const appt = adminState.appointments.find(a => a.id === id);
+    await releaseLocksForAppointment(appt);
+  }
   await db.collection('businesses').doc(adminState.businessId).collection('appointments').doc(id).update({ status });
   await loadAppointments();
   renderTabContent();
@@ -384,6 +399,10 @@ async function updateAppointmentStatus(id, status) {
 
 async function deleteAppointment(id) {
   if (!confirm('Biztosan törlöd ezt a foglalást?')) return;
+  const appt = adminState.appointments.find(a => a.id === id);
+  if (appt && appt.status !== 'cancelled') {
+    await releaseLocksForAppointment(appt);
+  }
   await db.collection('businesses').doc(adminState.businessId).collection('appointments').doc(id).delete();
   await loadAppointments();
   renderTabContent();
