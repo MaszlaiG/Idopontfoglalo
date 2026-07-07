@@ -86,15 +86,20 @@ function mappedAuthError(err) {
 // ---------- Vállalkozás betöltése ----------
 async function loadBusinessForUser() {
   renderLoadingScreen();
-  const snap = await db.collection('businesses').where('ownerUid', '==', adminState.user.uid).limit(1).get();
-  if (snap.empty) {
-    renderSetupWizard();
-    return;
+  try {
+    const snap = await db.collection('businesses').where('ownerUid', '==', adminState.user.uid).limit(1).get();
+    if (snap.empty) {
+      renderSetupWizard();
+      return;
+    }
+    adminState.businessId = snap.docs[0].id;
+    adminState.business = snap.docs[0].data();
+    await loadAppointments();
+    renderDashboard();
+  } catch (err) {
+    console.error(err);
+    root.innerHTML = `<div class="if-container"><div class="if-error-box">Hiba történt az adatok betöltésekor: ${escapeHtml(err.message || String(err))}<br><br>Ellenőrizd, hogy a Firestore biztonsági szabályok publikálva vannak-e, és hogy van-e internetkapcsolat.</div></div>`;
   }
-  adminState.businessId = snap.docs[0].id;
-  adminState.business = snap.docs[0].data();
-  await loadAppointments();
-  renderDashboard();
 }
 
 function renderLoadingScreen() {
@@ -136,33 +141,46 @@ function renderSetupWizard() {
     const name = document.getElementById('if-setup-name').value.trim();
     const id = document.getElementById('if-setup-id').value.trim();
     const errBox = document.getElementById('if-setup-error');
+    const btn = document.getElementById('if-setup-btn');
     if (!name || !id) {
       errBox.innerHTML = `<div class="if-error-box">Töltsd ki mindkét mezőt.</div>`;
       return;
     }
-    const existing = await db.collection('businesses').doc(id).get();
-    if (existing.exists) {
-      errBox.innerHTML = `<div class="if-error-box">Ez az azonosító már foglalt, válassz másikat.</div>`;
-      return;
+    btn.disabled = true;
+    btn.textContent = 'Létrehozás…';
+    errBox.innerHTML = '';
+    try {
+      const existing = await db.collection('businesses').doc(id).get();
+      if (existing.exists) {
+        errBox.innerHTML = `<div class="if-error-box">Ez az azonosító már foglalt, válassz másikat.</div>`;
+        btn.disabled = false;
+        btn.textContent = 'Vállalkozás létrehozása';
+        return;
+      }
+      const defaultHours = {};
+      for (let i = 0; i < 7; i++) {
+        defaultHours[i] = (i === 0) ? { closed: true } : { open: '09:00', close: '17:00', closed: false };
+      }
+      const newBusiness = {
+        name,
+        ownerUid: adminState.user.uid,
+        services: [{ id: 'svc1', name: 'Alap szolgáltatás', duration: 30, price: 5000 }],
+        workingHours: defaultHours,
+        slotInterval: 30,
+        closedDates: [],
+        theme: {},
+      };
+      await db.collection('businesses').doc(id).set(newBusiness);
+      adminState.businessId = id;
+      adminState.business = newBusiness;
+      await loadAppointments();
+      renderDashboard();
+    } catch (err) {
+      console.error(err);
+      errBox.innerHTML = `<div class="if-error-box">Hiba történt: ${escapeHtml(err.message || String(err))}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Vállalkozás létrehozása';
     }
-    const defaultHours = {};
-    for (let i = 0; i < 7; i++) {
-      defaultHours[i] = (i === 0) ? { closed: true } : { open: '09:00', close: '17:00', closed: false };
-    }
-    const newBusiness = {
-      name,
-      ownerUid: adminState.user.uid,
-      services: [{ id: 'svc1', name: 'Alap szolgáltatás', duration: 30, price: 5000 }],
-      workingHours: defaultHours,
-      slotInterval: 30,
-      closedDates: [],
-      theme: {},
-    };
-    await db.collection('businesses').doc(id).set(newBusiness);
-    adminState.businessId = id;
-    adminState.business = newBusiness;
-    await loadAppointments();
-    renderDashboard();
   });
 }
 
