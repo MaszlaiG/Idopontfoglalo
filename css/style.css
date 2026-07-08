@@ -122,9 +122,9 @@ body.if-widget-body {
   background: none;
   border: 1px solid var(--if-border);
   border-radius: var(--if-radius-sm);
-  width: 32px; height: 32px;
+  width: 40px; height: 40px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--if-text);
 }
 .if-cal-nav:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -181,7 +181,7 @@ body.if-widget-body {
   border: 1.5px solid var(--if-border);
   border-radius: var(--if-radius-sm);
   font-family: var(--if-font);
-  font-size: 14px;
+  font-size: 16px; /* min. 16px, hogy iOS Safari ne zoomoljon rá fókuszáláskor */
   background: var(--if-surface);
   color: var(--if-text);
 }
@@ -197,6 +197,7 @@ body.if-widget-body {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-height: 44px;
   padding: 12px 20px;
   border-radius: var(--if-radius-sm);
   border: none;
@@ -205,6 +206,7 @@ body.if-widget-body {
   font-weight: 600;
   cursor: pointer;
   transition: opacity .15s ease, transform .1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 .if-btn:active { transform: scale(0.98); }
 .if-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -272,6 +274,89 @@ body.if-widget-body {
   opacity: 0.6;
 }
 
-@media (max-width: 400px) {
-  .if-slot-grid { grid-template-columns: repeat(2, 1fr); }
+/* ============================================================
+   RESPONSZÍV — telefon és táblagép optimalizáció
+   ============================================================ */
+
+/* Admin — fejléc (vállalkozás neve + kijelentkezés gomb) */
+.if-admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Admin — tab-sáv: keskeny képernyőn vízszintesen görgethető,
+   így nem törik több sorba és a gombok nem zsugorodnak össze */
+.if-tab-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+}
+.if-tab-row .if-btn { white-space: nowrap; flex-shrink: 0; }
+
+/* Admin — nyitvatartás sorok (nap + nyitás/zárás mezők) */
+.if-hours-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--if-border);
+  flex-wrap: wrap;
+}
+.if-hours-day-label {
+  width: 90px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.if-hours-time { max-width: 110px; }
+
+/* Admin — foglalás-sor és az akciógombok */
+.if-appt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --- Táblagép (~481–900px): kicsit szélesebb tartalmi terület --- */
+@media (min-width: 481px) and (max-width: 900px) {
+  .if-container { max-width: 640px; }
+}
+
+/* --- Telefon (≤480px) --- */
+@media (max-width: 480px) {
+  .if-container { padding: 18px 14px 48px; }
+  .if-card { padding: 16px; }
+  .if-business-name { font-size: 19px; }
+  .if-hero { padding: 36px 16px 32px; }
+  .if-hero h1 { font-size: 26px; }
+
+  .if-cal-grid { gap: 3px; }
+  .if-cal-day { font-size: 13px; }
+  .if-slot-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+  .if-service-item { flex-wrap: wrap; row-gap: 8px; }
+  .if-service-price { width: 100%; text-align: left; }
+
+  .if-nav-row { flex-wrap: wrap; }
+  .if-nav-row .if-btn { min-width: 100%; }
+
+  .if-admin-header { flex-direction: column; align-items: stretch; }
+  .if-admin-header .if-btn { width: 100%; }
+
+  .if-hours-day-label { width: 100%; }
+  .if-hours-time { flex: 1; max-width: none; min-width: 90px; }
+
+  .if-appt-row { flex-direction: column; align-items: stretch; }
+  .if-appt-actions { flex-direction: row; flex-wrap: wrap; }
+  .if-appt-actions .if-btn { flex: 1; min-width: 90px; }
 }
