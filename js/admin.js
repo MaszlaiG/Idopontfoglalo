@@ -201,14 +201,14 @@ function renderDashboard() {
   ];
   root.innerHTML = `
     <div class="if-container" style="max-width:720px;">
-      <div class="if-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div class="if-header if-admin-header">
         <div>
           <p class="if-business-name">${escapeHtml(adminState.business.name)}</p>
           <p class="if-business-sub">Admin felület</p>
         </div>
         <button class="if-btn if-btn-ghost" id="if-logout-btn">Kijelentkezés</button>
       </div>
-      <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+      <div class="if-tab-row">
         ${tabs.map(([key, label]) => `
           <button class="if-btn ${adminState.tab === key ? 'if-btn-primary' : 'if-btn-ghost'}" data-tab="${key}">${label}</button>
         `).join('')}
@@ -243,14 +243,14 @@ function appointmentsTabHtml() {
   const statusColor = { pending: 'var(--if-accent)', confirmed: 'var(--if-success)', cancelled: 'var(--if-danger)' };
 
   const rows = list.map(a => `
-    <div class="if-service-item" style="cursor:default;">
+    <div class="if-service-item if-appt-row" style="cursor:default;">
       <div>
         <div class="if-service-name">${formatDateHuShort(a.date)} · ${a.time} — ${escapeHtml(a.serviceName)}</div>
         <div class="if-service-meta">${escapeHtml(a.customerName)} · ${escapeHtml(a.customerPhone)}${a.customerEmail ? ' · ' + escapeHtml(a.customerEmail) : ''}</div>
         ${a.note ? `<div class="if-service-meta" style="font-style:italic;">„${escapeHtml(a.note)}"</div>` : ''}
         <div style="margin-top:6px; font-size:12px; font-weight:700; color:${statusColor[a.status] || '#999'};">${statusLabel[a.status] || a.status}</div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:6px;">
+      <div class="if-appt-actions">
         ${a.status !== 'confirmed' ? `<button class="if-btn if-btn-ghost" data-confirm="${a.id}" style="font-size:12px; padding:6px 10px;">Megerősít</button>` : ''}
         ${a.status !== 'cancelled' ? `<button class="if-btn if-btn-ghost" data-cancel="${a.id}" style="font-size:12px; padding:6px 10px;">Lemond</button>` : ''}
         <button class="if-btn if-btn-danger" data-delete="${a.id}" style="font-size:12px; padding:6px 10px;">Törlés</button>
@@ -301,13 +301,13 @@ function hoursTabHtml() {
   const rows = DOW_NAMES.map((name, i) => {
     const d = wh[i] || { closed: true };
     return `
-      <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--if-border);">
-        <label style="width:90px; font-size:13px; font-weight:600;">
+      <div class="if-hours-row">
+        <label class="if-hours-day-label">
           <input type="checkbox" data-dow-open="${i}" ${!d.closed ? 'checked' : ''}> ${name}
         </label>
-        <input class="if-input" type="time" data-dow-start="${i}" value="${d.open || '09:00'}" ${d.closed ? 'disabled' : ''} style="max-width:110px;">
+        <input class="if-input if-hours-time" type="time" data-dow-start="${i}" value="${d.open || '09:00'}" ${d.closed ? 'disabled' : ''}>
         <span>–</span>
-        <input class="if-input" type="time" data-dow-end="${i}" value="${d.close || '17:00'}" ${d.closed ? 'disabled' : ''} style="max-width:110px;">
+        <input class="if-input if-hours-time" type="time" data-dow-end="${i}" value="${d.close || '17:00'}" ${d.closed ? 'disabled' : ''}>
       </div>
     `;
   }).join('');
